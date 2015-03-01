@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 using Tweetinvi;
-using Tweetinvi.Core.Interfaces;
 using Tweetinvi.Core.Interfaces.Credentials;
 
 namespace LiveTiles.Controllers
@@ -111,7 +110,7 @@ namespace LiveTiles.Controllers
             {
                 var twitterTile = tile as TwitterTile;
                 var tweets = GetTweets(twitterTile);
-                return PartialView("_TwitterTilePartialView", tile as TwitterTile);
+                return PartialView("_TwitterTilePartialView", tweets);
             }
             if (tile is NewsFeedTile)
             {
@@ -121,7 +120,7 @@ namespace LiveTiles.Controllers
             return PartialView("_TilePartialView");
         }
 
-        private IEnumerable<ITweet> GetTweets(TwitterTile tile)
+        private List<TweetDisplay> GetTweets(TwitterTile tile)
         {
             var credentials = CreateApplicationCredentials(_key, _secret);
 
@@ -130,8 +129,16 @@ namespace LiveTiles.Controllers
                 credentials.ConsumerKey, credentials.ConsumerSecret);
 
             // Search the tweets containing tweetinvi
-            var tweets = Search.SearchTweets("piersmorgan");
-            return tweets;
+            var items = Search.SearchTweets("piersmorgan");
+            var results = new List<TweetDisplay>();
+
+            foreach (var item in items)
+            {
+                var td = new TweetDisplay {Author = item.Creator.Name, Tweet = item.Text, ImageUrl = item.Creator.ProfileImageUrl};
+                results.Add(td);
+            }
+
+            return results;
         }
 
         // This method shows you how to create Application credentials. 
@@ -140,5 +147,12 @@ namespace LiveTiles.Controllers
         {
             return CredentialsCreator.GenerateApplicationCredentials(consumerKey, consumerSecret);
         }
+    }
+
+    public class TweetDisplay
+    {
+        public string Tweet { get; set; }
+        public string ImageUrl { get; set; }
+        public string Author { get; set; }
     }
 }
